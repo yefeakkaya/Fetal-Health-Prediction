@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetal Health AI | Tıbbi Teşhis Panosu</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome (İkonlar için) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2b5c8f;
+            --secondary-color: #38b000;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-dark: #2d3436;
+            --text-muted: #636e72;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navbar & Header */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #1a365d);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Ana Konteyner */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Tahmin Sonucu Kartı */
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            border-left: 6px solid;
+            animation: slideDown 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .result-success { border-color: #2ecc71; background-color: #f4fdf7; }
+        .result-warning { border-color: #f39c12; background-color: #fffaf0; }
+        .result-danger { border-color: #e74c3c; background-color: #fdf3f2; }
+
+        .result-content h3 { margin-top: 0; font-weight: 700; }
+        .confidence-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .result-success .confidence-circle { background: #2ecc71; }
+        .result-warning .confidence-circle { background: #f39c12; }
+        .result-danger .confidence-circle { background: #e74c3c; }
+
+        /* Form Tasarımı */
+        .dashboard-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group input {
+            padding: 0.8rem 1rem;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(43, 92, 143, 0.1);
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: #b2bec3;
+            margin-top: 0.3rem;
+        }
+
+        /* Submit Butonu */
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 2rem;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover { background-color: #1a365d; }
+        .submit-btn:active { transform: translateY(2px); }
+
+        /* Yükleniyor Ekranı (Loader) */
+        #loader-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loader-text {
+            margin-top: 15px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mobil Uyum */
+        @media (max-width: 768px) {
+            .result-card { flex-direction: column; text-align: center; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <h1><i class="fa-solid fa-heart-pulse"></i> Fetal Health AI</h1>
+        <div><i class="fa-solid fa-robot"></i> Derin Öğrenme Sınıflandırıcı v1.0</div>
+    </nav>
+
+    <!-- Yükleniyor Ekranı -->
+    <div id="loader-overlay">
+        <div class="spinner"></div>
+        <div class="loader-text">Sinir Ağı Analiz Ediyor... Lütfen Bekleyin.</div>
+    </div>
+
+    <div class="container">
+        <!-- Jinja2 ile Backend'den Gelen Tahmin Sonucu -->
+        {% if result %}
+        <div class="result-card result-{{ result.color }}">
+            <div class="result-content">
+                <h3 style="color: var(--text-dark);"><i class="fa-solid fa-notes-medical"></i> {{ result.label }}</h3>
+                <p style="font-size: 1.1rem; margin-bottom: 0;">{{ result.desc }}</p>
+            </div>
+            <div class="confidence-circle" title="Yapay Zeka Güven Skoru">
+                %{{ confidence }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Veri Giriş Formu -->
+        <div class="dashboard-card">
+            <h4 style="margin-top: 0; margin-bottom: 5px; color: var(--primary-color);">Kardiyotokografi (CTG) Veri Girişi</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                Lütfen hastaya ait güncel ölçümleri giriniz. Form, modelin eğitildiği medyan değerleriyle otomatik doldurulmuştur.
+            </p>
+
+            <form id="prediction-form" action="/predict" method="POST">
+                <div class="form-grid">
+                    {% for feature_name, stats in features.items() %}
+                    <div class="input-group">
+                        <!-- Değişken ismindeki alt çizgileri boşluğa çevirip İlk harfleri büyütür -->
+                        <label for="{{ feature_name }}">{{ feature_name.replace('_', ' ').title() }}</label>
+                        <input type="number" step="any" 
+                               id="{{ feature_name }}" name="{{ feature_name }}" 
+                               value="{{ submitted_data[feature_name] if submitted_data else stats.median }}" required>
+                        <div class="helper-text"><i class="fa-solid fa-circle-info"></i> Normal Medyan: {{ stats.median | round(3) }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fa-solid fa-microchip"></i> Modeli Çalıştır ve Analiz Et
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Etkileşimleri -->
+    <script>
+        document.getElementById('prediction-form').addEventListener('submit', function() {
+            // Butona tıklandığında yükleniyor animasyonunu göster
+            document.getElementById('loader-overlay').style.display = 'flex';
+            
+            // Kullanıcının birden fazla kez tıklamasını engelle
+            const btn = document.querySelector('.submit-btn');
+            btn.style.pointerEvents = 'none';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> İşleniyor...';
+        });
+    </script>
+</body>
+</html>
